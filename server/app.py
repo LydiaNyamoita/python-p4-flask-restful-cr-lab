@@ -24,18 +24,23 @@ class Plants(Resource):
         return make_response(jsonify(plants), 200)
 
     def post(self):
-        data = request.get_json()
 
         new_plant = Plant(
-            name=data['name'],
-            image=data['image'],
-            price=data['price'],
+            name=request.form['name'],
+            image=request.form['image'],
+            price=request.form['price'],
         )
 
         db.session.add(new_plant)
         db.session.commit()
 
-        return make_response(new_plant.to_dict(), 201)
+        plant_dict = new_plant.to_dict()
+
+        response = make_response(
+            jsonify(plant_dict),200
+        )
+
+        return response
 
 
 api.add_resource(Plants, '/plants')
@@ -44,27 +49,52 @@ api.add_resource(Plants, '/plants')
 class PlantByID(Resource):
 
     def get(self, id):
-        plant = Plant.query.filter_by(id=id).first().to_dict()
-        return make_response(jsonify(plant), 200)
+
+        response_dict = Plant.query.filter_by(id=id).first().to_dict()
+
+        response = make_response(
+            jsonify(response_dict),
+            200,
+        )
+
+        return response
+
     
     def patch(self,id):
         plant = Plant.query.filter_by(id=id).first()
-        for attr in request.json:
-            setattr(plant,attr,request.json.get(attr))
+
+        for attr in request.form:
+            setattr(plant,attr,request.form[attr])
+
+
         db.session.add(plant)
         db.session.commit()
+
         new_plant = plant.to_dict()
+
         response= make_response(
             jsonify(new_plant),
             200
         )
-        response.headers["Content-Type"] = "application/json"
+        #response.headers["Content-Type"] = "application/json"
         return response
+    
+    
     def delete(self,id):
         plant = Plant.query.filter_by(id=id).first()
+
         db.session.delete(plant)
         db.session.commit()
-        return ('',204)
+
+        plant_dict = {"message": "record successfuly deleted"}
+
+        response = make_response(
+            jsonify(plant_dict), 204
+        )
+
+        return response
+
+    
 api.add_resource(PlantByID, '/plants/<int:id>')
 
 
